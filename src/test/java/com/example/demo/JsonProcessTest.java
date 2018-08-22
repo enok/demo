@@ -25,7 +25,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"alameda\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.tipo");
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.pessoa.endereco.tipo", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -36,7 +36,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\",\"logradouro\":\"23 DE MAIO\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.pessoa.endereco.logradouro", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -47,7 +47,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"pedido\": {\"numero\": 123,\"pessoa\": {}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"logradouro\":\"23 DE MAIO\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.pessoa.endereco.logradouro", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -58,7 +58,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"contatos\":[{\"nome\":\"GOKU\",\"telefone\":\"1122334455\"}]}";
         String jsonResult = "{\"contatos\":[{\"nome\":\"GOKU\",\"telefone\":\"9988776655\"}]}";
 
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].telefone");
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contatos[0].telefone", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -69,7 +69,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"contatos\":[{\"telefone\":\"1122334455\"}]}";
         String jsonResult = "{\"contatos\":[{\"telefone\":\"1122334455\",\"nome\":\"GOKU\"}]}";
 
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].nome");
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contatos[0].nome", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -80,7 +80,7 @@ public class JsonProcessTest {
         String jsonTarget = "{}";
         String jsonResult = "{\"contatos\":[{\"telefone\":\"9988776655\"}]}";
 
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].telefone");
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contatos[0].telefone", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }

@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class JsonProcess {
 
-    public static String setValueIntoJsonPath(Object value, String jsonTarget, String path) {
+    public static String setValueIntoJsonPath(String jsonTarget, String path, Object value) {
         List<String> pathNodes = new ArrayList<>(Arrays.asList(path.split("\\.")));
         WriteContext writer = JsonPath.parse(jsonTarget);
 
@@ -88,9 +88,6 @@ public class JsonProcess {
         }
 
         return JsonPath.parse(writer.jsonString()).jsonString();
-    }
-
-    class NullObject {
     }
 
     private static void removeDolarSign(List<String> pathNodes) {
