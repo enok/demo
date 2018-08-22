@@ -38,7 +38,7 @@ public class JsonProcess {
                             if (isArray(currentNode)) {
                                 JSONArray jsonArray = new JSONArray();
                                 innerNode.put(removeBrackets(currentNode), jsonArray);
-                                writer.put(getFather(currentPath), removeBrackets(currentNode), jsonArray);
+                                writer.put(currentPath, removeBrackets(currentNode), jsonArray);
                             }
                             else {
                                 innerNode.put(currentNode, new LinkedHashMap());

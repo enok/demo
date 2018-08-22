@@ -84,4 +84,15 @@ public class JsonProcessTest {
 
         assertThat(result, is(equalTo(jsonResult)));
     }
+
+    @Test
+    public void setValueIntoNonExistentArrayMoreComplex() {
+        Object value = "JOSE";
+        String jsonTarget = "{\"ordem\":{\"item-ordem\":[{\"produto-origem\":{\"mobile-produto-id\":\"112233\"}}],\"conta-faturamento\":{\"cliente\":{\"tipo-pessoa\":\"PF\"}}}}";
+        String jsonResult = "{\"ordem\":{\"item-ordem\":[{\"produto-origem\":{\"mobile-produto-id\":\"112233\"}}],\"conta-faturamento\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
+
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.ordem.conta-faturamento.cliente.contato[0].nome-contato", value);
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
 }
