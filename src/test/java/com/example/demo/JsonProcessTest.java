@@ -20,7 +20,7 @@ public class JsonProcessTest {
     }
 
     @Test
-    public void salvaValorEmNoExistente() {
+    public void setValueIntoExistentNode() {
         Object value = "alameda";
         String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"alameda\"}}}}";
@@ -31,7 +31,7 @@ public class JsonProcessTest {
     }
 
     @Test
-    public void salvaValorEmNoNaoExistente() {
+    public void setValueIntoNonExistentNode() {
         Object value = "23 DE MAIO";
         String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\",\"logradouro\":\"23 DE MAIO\"}}}}";
@@ -42,12 +42,56 @@ public class JsonProcessTest {
     }
 
     @Test
-    public void salvaValorEmNoNaoExistenteVariosNos() {
+    public void setValueIntoNonExistentNodeSeveralNodes() {
         Object value = "23 DE MAIO";
         String jsonTarget = "{\"pedido\": {\"numero\": 123,\"pessoa\": {}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"logradouro\":\"23 DE MAIO\"}}}}";
 
         String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
+
+    @Test
+    public void setValueIntoExistentArray() {
+        Object value = "9988776655";
+        String jsonTarget = "{\"contatos\":[{\"nome\":\"GOKU\",\"telefone\":\"1122334455\"}]}";
+        String jsonResult = "{\"contatos\":[{\"nome\":\"GOKU\",\"telefone\":\"9988776655\"}]}";
+
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].telefone");
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
+
+    @Test
+    public void addValueIntoExistentArray() {
+        Object value = "GOKU";
+        String jsonTarget = "{\"contatos\":[{\"telefone\":\"1122334455\"}]}";
+        String jsonResult = "{\"contatos\":[{\"telefone\":\"1122334455\",\"nome\":\"GOKU\"}]}";
+
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].nome");
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
+
+    @Test
+    public void setValueIntoNonExistentArray() {
+        Object value = "9988776655";
+        String jsonTarget = "{}";
+        String jsonResult = "{\"contatos\":[{\"telefone\":\"9988776655\"}]}";
+
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].telefone");
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
+
+    @Test
+    public void outro() {
+        Object value = "9988776655";
+        String jsonTarget = "{}";
+        String jsonResult = "{\"contatos\":[{\"telefone\":\"9988776655\"}]}";
+
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].telefone");
 
         assertThat(result, is(equalTo(jsonResult)));
     }
