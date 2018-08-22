@@ -1,0 +1,43 @@
+{
+	"pedido": {
+		"numero": 123,
+		"pessoa": {
+			"endereco": {
+				"tipo": "rua",
+				"logradouro": "23 DE MAIO"
+			}
+		}
+	}
+}
+
+{
+	"pedido": {
+		"numero": 123,
+		"pessoa": {
+			"endereco": {
+				"tipo": "rua"
+			}
+		}
+	}
+}
+
+{
+	"pedido": {
+		"numero": 123,
+		"pessoa": {
+		}
+	}
+}
+
+
+
+{"pedido": {"numero": 123,"pessoa": {"endereco": {"tipo": "rua","logradouro": "23 DE MAIO"}}}}
+
+{"pedido": {"numero": 123,"pessoa": {"endereco": {"tipo": "rua"}}}}
+
+{"pedido": {"numero": 123,"pessoa": {}}}
+
+
+$.pedido.pessoa.endereco.logradouro
+
+lastPathNode = $.pedido.pessoa.endereco
