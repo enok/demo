@@ -38,6 +38,7 @@ public class JsonProcess {
                             if (isArray(currentNode)) {
                                 JSONArray jsonArray = new JSONArray();
                                 innerNode.put(removeBrackets(currentNode), jsonArray);
+                                //writer.put(getFather(currentPath), removeBrackets(currentNode), jsonArray);
                                 writer.put(currentPath, removeBrackets(currentNode), jsonArray);
                             }
                             else {
@@ -55,7 +56,14 @@ public class JsonProcess {
                         }
                         else if (innerObject instanceof JSONArray) {
                             JSONArray jsonArray = (JSONArray) innerObject;
-                            Object object = jsonArray.get(getIndex(currentNode));
+                            int index = getIndex(currentNode);
+                            Object object = null;
+                            if (index < jsonArray.size()) {
+                                object = jsonArray.get(index);
+                            }
+                            else {
+                                object = innerObject;
+                            }
                             rootNode = object;
                         }
                         else if (innerObject instanceof Object) {
@@ -79,9 +87,15 @@ public class JsonProcess {
                                 innerArray.add(innerNode);
                                 rootNode = innerArray;
                             }
-                            writer.set(removeBrackets(currentPath), innerArray);
+                            //writer.set(removeBrackets(currentPath), innerArray);
                         }
                     }
+                    else {
+                        JSONObject object = new JSONObject();
+                        object.put(currentNode, value);
+                        innerArray.add(object);
+                    }
+                    writer.set(removeBrackets(currentPath), innerArray);
                 }
                 currentPath += "." + currentNode;
             }
