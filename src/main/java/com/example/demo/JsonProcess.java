@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class JsonProcess {
 
-    public String setValueIntoJsonPath(Object value, String jsonTarget, String path) {
+    public static String setValueIntoJsonPath(Object value, String jsonTarget, String path) {
         List<String> pathNodes = new ArrayList<>(Arrays.asList(path.split("\\.")));
         WriteContext writer = JsonPath.parse(jsonTarget);
 
@@ -82,11 +82,6 @@ public class JsonProcess {
                             writer.set(removeBrackets(currentPath), innerArray);
                         }
                     }
-                    else {
-                        System.out.println("?????????????????? ?????????????????");
-                        String father = getFather(currentPath);
-                        Object innerObject = innerArray.get(getIndex(father));
-                    }
                 }
                 currentPath += "." + currentNode;
             }
@@ -98,37 +93,37 @@ public class JsonProcess {
     class NullObject {
     }
 
-    private void removeDolarSign(List<String> pathNodes) {
+    private static void removeDolarSign(List<String> pathNodes) {
         pathNodes.remove(0);
     }
 
-    private boolean nodeDoesNotExist(Object nodeObject) {
+    private static boolean nodeDoesNotExist(Object nodeObject) {
         return nodeObject == null;
     }
 
-    private String removeBrackets(String currentNode) {
+    private static String removeBrackets(String currentNode) {
         return currentNode.replaceAll("\\[\\d\\]", "");
     }
 
-    private boolean nodeIsLeaf(Iterator<String> iterator) {
+    private static boolean nodeIsLeaf(Iterator<String> iterator) {
         return !iterator.hasNext();
     }
 
-    private boolean isArray(String node) {
+    private static boolean isArray(String node) {
         return node.contains("[");
     }
 
-    private int getIndex(String currentNode) {
+    private static int getIndex(String currentNode) {
         String numberString = currentNode.replaceAll("[^\\d]", "");
         return Integer.parseInt(numberString);
     }
 
-    private String getFather(String path) {
+    private static String getFather(String path) {
         List<String> nodes = Arrays.asList(path.split("\\."));
         return nodes.get(nodes.size() - 1);
     }
 
-    private boolean emptyArray(JSONArray innerNode) {
+    private static boolean emptyArray(JSONArray innerNode) {
         return innerNode.size() == 0;
     }
 }

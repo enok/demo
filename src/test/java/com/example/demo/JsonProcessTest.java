@@ -84,15 +84,4 @@ public class JsonProcessTest {
 
         assertThat(result, is(equalTo(jsonResult)));
     }
-
-    @Test
-    public void outro() {
-        Object value = "9988776655";
-        String jsonTarget = "{}";
-        String jsonResult = "{\"contatos\":[{\"telefone\":\"9988776655\"}]}";
-
-        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.contatos[0].telefone");
-
-        assertThat(result, is(equalTo(jsonResult)));
-    }
 }
