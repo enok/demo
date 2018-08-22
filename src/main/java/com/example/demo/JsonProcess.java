@@ -1,8 +1,9 @@
 package com.example.demo;
 
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.WriteContext;
+import net.minidev.json.JSONArray;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -11,71 +12,61 @@ import java.util.*;
  */
 public class JsonProcess {
 
-    public String save(Object value, String jsonTarget, String path) {
-        WriteContext writer = JsonPath.parse(jsonTarget);
-
+    public String setValueIntoJsonPath(Object value, String jsonTarget, String path) {
         List<String> pathNodes = new ArrayList<>(Arrays.asList(path.split("\\.")));
 
-        String lastPathNode = "";
-        boolean deveParar = false;
+        if (!CollectionUtils.isEmpty(pathNodes)) {
+            WriteContext writer = JsonPath.parse(jsonTarget);
+            Object rootNode = JsonPath.read(jsonTarget, pathNodes.get(0));
+            String currentPath = "$";
+            removeDolarSign(pathNodes);
 
-        int i = 0;
-        Iterator<String> iterator = pathNodes.iterator();
-        while (iterator.hasNext()) {
-            String node = iterator.next();
-            lastPathNode += (i++ > 0 ? "." : "") + node;
-            try {
-                JsonPath.read(jsonTarget, lastPathNode);
-            }
-            catch (PathNotFoundException e) {
-                deveParar = true;
-                lastPathNode = removeUltimoNo(lastPathNode);
-            }
-            if (deveParar) {
-                break;
-            }
-            iterator.remove();
-        }
-        if (pathNodes.size() == 0) {
-            String pai = buscarPai(lastPathNode);
-            Object read = JsonPath.read(jsonTarget, pai);
+            Iterator<String> iterator = pathNodes.iterator();
+            while (iterator.hasNext()) {
+                String currentNode = iterator.next();
 
-            if (read instanceof LinkedHashMap) {
-                LinkedHashMap node = (LinkedHashMap) read;
-                String filho = buscarFilho(lastPathNode);
-                node.put(filho, value);
-                return writer.set(pai, node).jsonString();
-            }
-        }
-        else {
-            for (String node : pathNodes) {
-                lastPathNode += "." + node;
+                if (rootNode instanceof LinkedHashMap) {
+                    LinkedHashMap innerNode = (LinkedHashMap) rootNode;
+                    Object innerObject = innerNode.get(currentNode);
 
-                String pai = buscarPai(lastPathNode);
-                Object read = JsonPath.read(jsonTarget, pai);
-
-                if (read instanceof LinkedHashMap) {
-                    LinkedHashMap node2 = (LinkedHashMap) read;
-                    String filho = buscarFilho(lastPathNode);
-                    node2.put(filho, value);
-                    writer.set(pai, node2).jsonString();
+                    if (nodeDoesNotExist(innerObject)) {
+                        if (nodeIsLeaf(iterator)) {
+                            innerNode.put(currentNode, value);
+                        }
+                        else {
+                            innerNode.put(currentNode, new LinkedHashMap());
+                            rootNode = innerNode.get(currentNode);
+                        }
+                        jsonTarget = writer.set(currentPath, innerNode).jsonString();
+                    }
+                    else {
+                        if (innerObject instanceof LinkedHashMap) {
+                            rootNode = innerObject;
+                        }
+                        else if (innerObject instanceof JSONArray) {
+                        }
+                        else if (innerObject instanceof Object) {
+                            innerNode.put(currentNode, value);
+                            jsonTarget = writer.set(currentPath, innerNode).jsonString();
+                        }
+                    }
                 }
+                currentPath += "." + currentNode;
             }
-            return writer.jsonString();
         }
 
-        return null;
+        return JsonPath.parse(jsonTarget).jsonString();
     }
 
-    private String buscarPai(String path) {
-        return path.substring(0, path.lastIndexOf("."));
+    private void removeDolarSign(List<String> pathNodes) {
+        pathNodes.remove(0);
     }
 
-    private String buscarFilho(String path) {
-        return path.substring(path.lastIndexOf(".") + 1);
+    private boolean nodeDoesNotExist(Object nodeObject) {
+        return nodeObject == null;
     }
 
-    private String removeUltimoNo(String path) {
-        return path.substring(0, path.lastIndexOf("."));
+    private boolean nodeIsLeaf(Iterator<String> iterator) {
+        return !iterator.hasNext();
     }
 }

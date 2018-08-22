@@ -25,7 +25,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"alameda\"}}}}";
 
-        String result = jsonProcess.save(value, jsonTarget, "$.pedido.pessoa.endereco.tipo");
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.tipo");
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -36,7 +36,7 @@ public class JsonProcessTest {
         String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
         String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\",\"logradouro\":\"23 DE MAIO\"}}}}";
 
-        String result = jsonProcess.save(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -45,9 +45,9 @@ public class JsonProcessTest {
     public void salvaValorEmNoNaoExistenteVariosNos() {
         Object value = "23 DE MAIO";
         String jsonTarget = "{\"pedido\": {\"numero\": 123,\"pessoa\": {}}}";
-        String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\",\"logradouro\":\"23 DE MAIO\"}}}}";
+        String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"logradouro\":\"23 DE MAIO\"}}}}";
 
-        String result = jsonProcess.save(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
+        String result = jsonProcess.setValueIntoJsonPath(value, jsonTarget, "$.pedido.pessoa.endereco.logradouro");
 
         assertThat(result, is(equalTo(jsonResult)));
     }
