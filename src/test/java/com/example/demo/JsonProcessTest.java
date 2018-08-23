@@ -88,8 +88,8 @@ public class JsonProcessTest {
     @Test
     public void setValueIntoNonExistentArrayMoreComplex() {
         Object value = "JOSE";
-        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"produto-id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\"}}}}";
-        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"produto-id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
+        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\"}}}}";
+        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
 
         String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.clientes.cliente.contato[0].nome-contato", value);
 
@@ -99,10 +99,21 @@ public class JsonProcessTest {
     @Test
     public void setValueIntoExistentArrayMoreComplex() {
         Object value = "MARIA";
-        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"produto-id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
-        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"produto-id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"},{\"nome-contato\":\"MARIA\"}]}}}}";
+        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
+        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"},{\"nome-contato\":\"MARIA\"}]}}}}";
 
         String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.clientes.cliente.contato[1].nome-contato", value);
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
+
+    @Test
+    public void setValueIntoExistentArrayEvenMoreComplex() {
+        Object value = "livro";
+        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"cliente\":{\"endereco\":{\"logradouro\":\"AVENIDA\"}}}}";
+        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\",\"grupo\":{\"tipo\":\"livro\"}}}],\"cliente\":{\"endereco\":{\"logradouro\":\"AVENIDA\"}}}}";
+
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.item-pedido[0].produto.grupo.tipo", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
