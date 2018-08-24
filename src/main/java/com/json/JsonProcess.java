@@ -115,9 +115,6 @@ public class JsonProcess {
 
     private static Object getObjectFromList(Object value, WriteContext writer, String currentPath, String currentNode, List<Object> innerList, Iterator<String> iterator) {
         for (Object object : innerList) {
-            if (object instanceof List) {
-                System.out.println(object);
-            }
             if (object instanceof LinkedHashMap) {
                 LinkedHashMap linkedHashMap = (LinkedHashMap) object;
                 if (nodeIsLeaf(iterator)) {
