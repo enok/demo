@@ -110,7 +110,6 @@ public class JsonProcess {
                 currentPath += "." + currentNode;
             }
         }
-
         return JsonPath.parse(writer.jsonString()).jsonString();
     }
 
