@@ -149,4 +149,15 @@ public class JsonProcessTest {
 
         assertThat(result, is(equalTo(jsonResult)));
     }
+
+    @Test
+    public void setValueIntoExistentArrayIntoAnotherArray() {
+        Object value = "5678";
+        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"item-produto\":null}}]}}";
+        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"item-produto\":[{\"id\":\"5678\"}]}}]}}";
+
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.item-pedido[0].produto.item-produto[0].id", value);
+
+        assertThat(result, is(equalTo(jsonResult)));
+    }
 }

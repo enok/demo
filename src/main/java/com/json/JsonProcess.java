@@ -5,6 +5,7 @@ import com.jayway.jsonpath.WriteContext;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -178,7 +179,12 @@ public class JsonProcess {
     }
 
     private static String removeBrackets(String currentNode) {
-        return currentNode.replaceAll("\\[\\d\\]", "");
+        String lastNode = getLastNode(currentNode).replaceAll("\\[\\d\\]", "");
+        String innerCurrentNode = removeLastNode(currentNode);
+        if (!StringUtils.isEmpty(innerCurrentNode)) {
+            return innerCurrentNode.concat(".").concat(lastNode);
+        }
+        return lastNode;
     }
 
     private static boolean nodeIsLeaf(Iterator<String> iterator) {
@@ -214,5 +220,13 @@ public class JsonProcess {
     private static String getLastNode(String path) {
         List<String> list = Arrays.asList(path.split("\\."));
         return list.get(list.size() - 1);
+    }
+
+    private static String removeLastNode(String path) {
+        int index = path.lastIndexOf(".");
+        if (index >= 0) {
+            return path.substring(0, index);
+        }
+        return null;
     }
 }
