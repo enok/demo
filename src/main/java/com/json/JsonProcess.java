@@ -4,8 +4,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.WriteContext;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -18,170 +16,149 @@ public class JsonProcess {
         List<String> pathNodes = new ArrayList<>(Arrays.asList(path.split("\\.")));
         WriteContext writer = JsonPath.parse(jsonTarget);
 
-        if (!CollectionUtils.isEmpty(pathNodes)) {
+        if (!isEmpty(pathNodes)) {
             Object rootNode = JsonPath.read(jsonTarget, pathNodes.get(0));
-            String currentPath = "$";
+            String previousFullPath = "$";
             removeDolarSign(pathNodes);
 
             Iterator<String> iterator = pathNodes.iterator();
             while (iterator.hasNext()) {
-                String currentNode = iterator.next();
-                rootNode = processNode(value, writer, rootNode, currentPath, iterator, currentNode);
-                currentPath += "." + currentNode;
+                String currentNodePath = iterator.next();
+
+                if (rootNode == null) {
+                    processCurrentNodeAsNewValue(previousFullPath, currentNodePath, value, writer);
+                }
+                else if (rootNode instanceof LinkedHashMap) {
+                    rootNode = processCurrentNodeAsLinkedHashMap(previousFullPath, currentNodePath, value, rootNode, writer, iterator);
+                }
+                else if (rootNode instanceof List) {
+                    rootNode = processCurrentNodeAsList(previousFullPath, currentNodePath, value, rootNode, writer, iterator);
+                }
+                previousFullPath += "." + currentNodePath;
             }
         }
+
         return JsonPath.parse(writer.jsonString()).jsonString();
     }
 
-    private static Object processNode(Object value, WriteContext writer, Object rootNode, String currentPath, Iterator<String> iterator, String currentNode) {
-        if (rootNode == null) {
-            processNullNode(value, writer, currentPath, currentNode);
+    private static void processCurrentNodeAsNewValue(String previousFullPath, String currentNodePath, Object value, WriteContext writer) {
+        LinkedHashMap addedNode = addValueIntoLinkedHashMap(currentNodePath, value, new LinkedHashMap());
+
+        String lastElement = getLastElementFromPath(previousFullPath);
+
+        if (isList(lastElement)) {
+            JSONArray jsonArray = addNewJSONArrayIntoLinkedHashMap(addedNode);
+            writer.set(removeBrackets(previousFullPath), jsonArray);
         }
-        else if (rootNode instanceof LinkedHashMap) {
-            rootNode = processNodeAsLinkedHashMap(value, writer, rootNode, currentPath, iterator, currentNode);
+        else {
+            writer.set(removeBrackets(previousFullPath), addedNode);
         }
-        else if (rootNode instanceof List) {
-            rootNode = processNodeAsList(value, writer, rootNode, currentPath, iterator, currentNode);
+    }
+
+    private static Object processCurrentNodeAsLinkedHashMap(String previousFullPath, String currentNodePath, Object value, Object rootNode, WriteContext writer, Iterator<String> iterator) {
+        LinkedHashMap rootNodeLinkedHashMap = (LinkedHashMap) rootNode;
+        Object childNode = rootNodeLinkedHashMap.get(removeBrackets(currentNodePath));
+
+        if (nodeDoesNotExist(childNode)) {
+            rootNode = processChildNodeAsNew(previousFullPath, currentNodePath, value, rootNode, writer, iterator, rootNodeLinkedHashMap);
+        }
+        else {
+            rootNode = processChildNodeAsExistent(previousFullPath, currentNodePath, value, rootNode, writer, rootNodeLinkedHashMap, childNode);
         }
         return rootNode;
     }
 
-    private static void processNullNode(Object value, WriteContext writer, String currentPath, String currentNode) {
-        LinkedHashMap innerNode = new LinkedHashMap();
-        innerNode.put(currentNode, value);
-
-        String previousNode = getLastNode(currentPath);
-
-        if (isList(previousNode)) {
-            setNewNodeIntoJSONArray(writer, currentPath, innerNode);
-        }
-        else {
-            setNewNodeAsLinkedHasMap(writer, currentPath, innerNode);
-        }
-    }
-
-    private static void setNewNodeIntoJSONArray(WriteContext writer, String currentPath, LinkedHashMap innerNode) {
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.add(innerNode);
-        writer.set(removeBrackets(currentPath), jsonArray);
-    }
-
-    private static void setNewNodeAsLinkedHasMap(WriteContext writer, String currentPath, LinkedHashMap innerNode) {
-        writer.set(removeBrackets(currentPath), innerNode);
-    }
-
-    private static Object processNodeAsLinkedHashMap(Object value, WriteContext writer, Object rootNode, String currentPath, Iterator<String> iterator, String currentNode) {
-        LinkedHashMap innerNode = (LinkedHashMap) rootNode;
-        Object innerObject = innerNode.get(removeBrackets(currentNode));
-
-        if (nodeDoesNotExist(innerObject)) {
-            rootNode = processNotExistingLinkedHashMapNode(value, writer, rootNode, currentPath, iterator, currentNode, innerNode);
-        }
-        else {
-            rootNode = processExistingHashMapNode(value, writer, rootNode, currentPath, currentNode, innerNode, innerObject);
-        }
-        return rootNode;
-    }
-
-    private static Object processNotExistingLinkedHashMapNode(Object value, WriteContext writer, Object rootNode, String currentPath, Iterator<String> iterator, String currentNode, LinkedHashMap innerNode) {
+    private static Object processChildNodeAsNew(String previousFullPath, String currentNodePath, Object value, Object rootNode, WriteContext writer, Iterator<String> iterator, LinkedHashMap rootNodeLinkedHashMap) {
         if (nodeIsLeaf(iterator)) {
-            processHashMapNodeAsLeaf(value, currentNode, innerNode);
+            processChildNodeAsNewAndLeaf(currentNodePath, value, rootNodeLinkedHashMap);
         }
         else {
-            rootNode = processHashMapNodeAsNotLeaf(writer, currentPath, currentNode, innerNode);
+            rootNode = processChildNodeAsNewAndBranch(previousFullPath, currentNodePath, writer, rootNodeLinkedHashMap);
         }
-        if (!isList(currentNode)) {
-            writer.set(currentPath, innerNode);
+        if (currentNodePathIsNotAList(currentNodePath)) {
+            writer.set(previousFullPath, rootNodeLinkedHashMap);
         }
         return rootNode;
     }
 
-    private static void processHashMapNodeAsLeaf(Object value, String currentNode, LinkedHashMap innerNode) {
-        innerNode.put(currentNode, value);
+    private static void processChildNodeAsNewAndLeaf(String currentNodePath, Object value, LinkedHashMap rootNodeLinkedHashMap) {
+        rootNodeLinkedHashMap.put(currentNodePath, value);
     }
 
-    private static Object processHashMapNodeAsNotLeaf(WriteContext writer, String currentPath, String currentNode, LinkedHashMap innerNode) {
-        if (isList(currentNode)) {
-            List jsonList = new ArrayList();
-            innerNode.put(removeBrackets(currentNode), jsonList);
-            putNodeAsList(writer, currentPath, currentNode, jsonList);
+    private static Object processChildNodeAsNewAndBranch(String previousFullPath, String currentNodePath, WriteContext writer, LinkedHashMap rootNodeLinkedHashMap) {
+        if (isList(currentNodePath)) {
+            List jsonList = addListIntoLinkedHashMap(currentNodePath, rootNodeLinkedHashMap, new ArrayList());
+            writer.put(previousFullPath, removeBrackets(currentNodePath), jsonList);
         }
         else {
-            innerNode.put(currentNode, new LinkedHashMap());
+            rootNodeLinkedHashMap.put(currentNodePath, new LinkedHashMap());
         }
-        return innerNode.get(removeBrackets(currentNode));
+        return rootNodeLinkedHashMap.get(removeBrackets(currentNodePath));
     }
 
-    private static void putNodeAsList(WriteContext writer, String currentPath, String currentNode, List jsonList) {
-        writer.put(currentPath, removeBrackets(currentNode), jsonList);
+    private static boolean currentNodePathIsNotAList(String currentNodePath) {
+        return !isList(currentNodePath);
     }
 
-    private static Object processExistingHashMapNode(Object value, WriteContext writer, Object rootNode, String currentPath, String currentNode, LinkedHashMap innerNode, Object innerObject) {
-        if (innerObject instanceof LinkedHashMap) {
-            rootNode = processExistingHashMapNodeInnerObjectAsLinkedHasMap(innerObject);
+    private static Object processChildNodeAsExistent(String previousFullPath, String currentNodePath, Object value, Object rootNode, WriteContext writer, LinkedHashMap rootNodeLinkedHashMap, Object childNode) {
+        if (childNode instanceof LinkedHashMap) {
+            rootNode = processChildNodeAsExistentAndLinkedHashMap(childNode);
         }
-        else if (innerObject instanceof List) {
-            rootNode = processExistingHashMapNodeInnerObjectAsList(currentNode, innerObject);
+        else if (childNode instanceof List) {
+            rootNode = processChildNodeAsExistentAndList(currentNodePath, childNode);
         }
-        else if (innerObject instanceof Object) {
-            processExistingHashMapNodeInnerObjectAsObject(value, writer, currentPath, currentNode, innerNode);
+        else if (childNode instanceof Object) {
+            processChildNodeAsExistentAndObject(previousFullPath, currentNodePath, value, writer, rootNodeLinkedHashMap);
         }
         return rootNode;
     }
 
-    private static Object processExistingHashMapNodeInnerObjectAsLinkedHasMap(Object innerObject) {
-        return innerObject;
+    private static Object processChildNodeAsExistentAndLinkedHashMap(Object childNode) {
+        return childNode;
     }
 
-    private static Object processExistingHashMapNodeInnerObjectAsList(String currentNode, Object innerObject) {
+    private static Object processChildNodeAsExistentAndList(String currentNodePath, Object childNode) {
         Object rootNode;
-        List jsonList = (List) innerObject;
-        int index = getIndex(currentNode);
-        if (index < jsonList.size()) {
+        List jsonList = (List) childNode;
+        int index = getIndex(currentNodePath);
+        if (indexBelongsToList(index, jsonList)) {
             rootNode = jsonList.get(index);
         }
         else {
-            rootNode = innerObject;
+            rootNode = childNode;
         }
         return rootNode;
     }
 
-    private static void processExistingHashMapNodeInnerObjectAsObject(Object value, WriteContext writer, String currentPath, String currentNode, LinkedHashMap innerNode) {
-        innerNode.put(currentNode, value);
-        writer.set(currentPath, innerNode);
+    private static void processChildNodeAsExistentAndObject(String previousFullPath, String currentNodePath, Object value, WriteContext writer, LinkedHashMap rootNodeLinkedHashMap) {
+        rootNodeLinkedHashMap.put(currentNodePath, value);
+        writer.set(previousFullPath, rootNodeLinkedHashMap);
     }
 
-    private static Object processNodeAsList(Object value, WriteContext writer, Object rootNode, String currentPath, Iterator<String> iterator, String currentNode) {
-        List<Object> innerList = (List) rootNode;
-        if (emptyList(innerList)) {
-            rootNode = processEmptyList(value, writer, rootNode, currentPath, iterator, currentNode, innerList);
+    private static Object processCurrentNodeAsList(String previousFullPath, String currentNodePath, Object value, Object rootNode, WriteContext writer, Iterator<String> iterator) {
+        List<Object> rootNodeList = (List) rootNode;
+        if (emptyList(rootNodeList)) {
+            rootNode = processRootNodeAsList(previousFullPath, currentNodePath, value, rootNode, writer, iterator, rootNodeList);
         }
         else {
-            rootNode = getObjectFromList(value, writer, currentPath, currentNode, innerList, iterator);
+            rootNode = getObjectFromList(value, writer, previousFullPath, currentNodePath, rootNodeList, iterator);
         }
         return rootNode;
     }
 
-    private static Object processEmptyList(Object value, WriteContext writer, Object rootNode, String currentPath, Iterator<String> iterator, String currentNode, List<Object> innerList) {
-        if (!isList(currentNode)) {
+    private static Object processRootNodeAsList(String previousFullPath, String currentNodePath, Object value, Object rootNode, WriteContext writer, Iterator<String> iterator, List<Object> rootNodeList) {
+        if (!isList(currentNodePath)) {
             if (nodeIsLeaf(iterator)) {
-                addObjectIntoList(value, currentNode, innerList);
+                addNewJSONObjectIntoList(rootNodeList, currentNodePath, value);
             }
             else {
-                LinkedHashMap innerNode = new LinkedHashMap();
-                innerNode.put(currentNode, value);
-                innerList.add(innerNode);
-                rootNode = innerList;
+                LinkedHashMap innerNode = addValueIntoLinkedHashMap(currentNodePath, value, new LinkedHashMap());
+                rootNodeList.add(innerNode);
+                rootNode = rootNodeList;
             }
-            writer.set(removeBrackets(currentPath), innerList);
+            writer.set(removeBrackets(previousFullPath), rootNodeList);
         }
         return rootNode;
-    }
-
-    private static void addObjectIntoList(Object value, String currentNode, List<Object> innerList) {
-        JSONObject object = new JSONObject();
-        object.put(currentNode, value);
-        innerList.add(object);
     }
 
     private static Object getObjectFromList(Object value, WriteContext writer, String currentPath, String currentNode, List<Object> innerList, Iterator<String> iterator) {
@@ -189,7 +166,7 @@ public class JsonProcess {
             if (object instanceof LinkedHashMap) {
                 LinkedHashMap linkedHashMap = (LinkedHashMap) object;
                 if (nodeIsLeaf(iterator)) {
-                    processNodeAsLeaf(value, writer, currentPath, currentNode, innerList, linkedHashMap);
+                    processObjectAsLeaf(value, writer, currentPath, currentNode, innerList, linkedHashMap);
                     break;
                 }
                 else {
@@ -200,20 +177,20 @@ public class JsonProcess {
                 return getObjectFromList(value, writer, currentPath, currentNode, (List) object, iterator);
             }
             else {
-                addObjectIntoList(value, currentNode, innerList);
+                addNewJSONObjectIntoList(innerList, currentNode, value);
                 writer.set(removeBrackets(currentPath), innerList);
             }
         }
         return null;
     }
 
-    private static void processNodeAsLeaf(Object value, WriteContext writer, String currentPath, String currentNode, List<Object> innerList, LinkedHashMap linkedHashMap) {
+    private static void processObjectAsLeaf(Object value, WriteContext writer, String currentPath, String currentNode, List<Object> innerList, LinkedHashMap linkedHashMap) {
         JSONObject innerObject = new JSONObject();
         innerObject.put(currentNode, value);
 
-        String innerCurrentNode = getLastNode(currentPath);
+        String innerCurrentNode = getLastElementFromPath(currentPath);
         if (isList(innerCurrentNode)) {
-            processCurrentNodeAslist(value, currentNode, innerList, innerObject, innerCurrentNode);
+            processObjectAsLeafAndList(value, currentNode, innerList, innerObject, innerCurrentNode);
         }
         else {
             linkedHashMap.put(currentNode, value);
@@ -222,39 +199,59 @@ public class JsonProcess {
         writer.set(removeBrackets(currentPath), innerList);
     }
 
-    private static void processCurrentNodeAslist(Object value, String currentNode, List<Object> innerList, JSONObject innerObject, String innerCurrentNode) {
+    private static void processObjectAsLeafAndList(Object value, String currentNode, List<Object> innerList, JSONObject innerObject, String innerCurrentNode) {
         int index = getIndex(innerCurrentNode);
-        if (innerCurrentNodeBelongsToInnerList(innerList, index)) {
-            updateNodeValue(value, currentNode, innerList, index);
+        if (indexBelongsToList(index, innerList)) {
+            addValueIntoListNode(currentNode, value, index, innerList);
         }
         else {
-            addInnerObjectAsNewElementIntoInnerList(innerObject, innerList);
+            addValueIntoListNodeAsNewElement(innerList, innerObject);
         }
     }
 
-    private static void updateNodeValue(Object value, String currentNode, List<Object> innerList, int index) {
-        Object innerObjectFromList = innerList.get(index);
-        if (innerObjectFromList != null) {
-            if (innerObjectFromList instanceof LinkedHashMap) {
-                LinkedHashMap finalLinkedHasMap = (LinkedHashMap) innerObjectFromList;
-                finalLinkedHasMap.put(currentNode, value);
-            }
-        }
-    }
-
-    private static void addInnerObjectAsNewElementIntoInnerList(JSONObject innerObject, List<Object> innerList) {
+    private static void addValueIntoListNodeAsNewElement(List<Object> innerList, JSONObject innerObject) {
         LinkedHashMap innerLinkedHashMap = (LinkedHashMap) innerList.get(0);
         innerList.remove(0);
         Set<Map.Entry<String, Object>> entries = innerLinkedHashMap.entrySet();
 
         for (Map.Entry<String, Object> entry : entries) {
-            addObjectIntoList(entry.getValue(), entry.getKey(), innerList);
+            addNewJSONObjectIntoList(innerList, entry.getKey(), entry.getValue());
         }
         innerList.add(innerObject);
     }
 
-    private static boolean innerCurrentNodeBelongsToInnerList(List<Object> innerList, int index) {
-        return innerList.size() > index;
+    private static void addValueIntoListNode(String currentNode, Object value, int index, List<Object> innerList) {
+        Object innerObjectFromList = innerList.get(index);
+        if ((innerObjectFromList != null) && (innerObjectFromList instanceof LinkedHashMap)) {
+            addValueIntoLinkedHashMap(currentNode, value, (LinkedHashMap) innerObjectFromList);
+        }
+    }
+
+    private static boolean indexBelongsToList(int index, List<Object> list) {
+        return index < list.size();
+    }
+
+    private static List addListIntoLinkedHashMap(String currentNode, LinkedHashMap innerNode, List jsonList) {
+        innerNode.put(removeBrackets(currentNode), jsonList);
+        return jsonList;
+    }
+
+    private static void addNewJSONObjectIntoList(List<Object> list, String key, Object value) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(key, value);
+        list.add(jsonObject);
+    }
+
+    private static LinkedHashMap addValueIntoLinkedHashMap(String path, Object value, LinkedHashMap linkedHashMap) {
+        LinkedHashMap finalLinkedHasMap = linkedHashMap;
+        finalLinkedHasMap.put(path, value);
+        return finalLinkedHasMap;
+    }
+
+    private static JSONArray addNewJSONArrayIntoLinkedHashMap(LinkedHashMap linkedHashMap) {
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(linkedHashMap);
+        return jsonArray;
     }
 
     private static void removeDolarSign(List<String> pathNodes) {
@@ -265,10 +262,10 @@ public class JsonProcess {
         return nodeObject == null;
     }
 
-    private static String removeBrackets(String currentNode) {
-        String lastNode = getLastNode(currentNode).replaceAll("\\[\\d\\]", "");
-        String innerCurrentNode = removeLastNode(currentNode);
-        if (!StringUtils.isEmpty(innerCurrentNode)) {
+    private static String removeBrackets(String path) {
+        String lastNode = getLastElementFromPath(path).replaceAll("\\[\\d\\]", "");
+        String innerCurrentNode = removeLastNode(path);
+        if (!isEmpty(innerCurrentNode)) {
             return innerCurrentNode.concat(".").concat(lastNode);
         }
         return lastNode;
@@ -304,7 +301,7 @@ public class JsonProcess {
         return false;
     }
 
-    private static String getLastNode(String path) {
+    private static String getLastElementFromPath(String path) {
         List<String> list = Arrays.asList(path.split("\\."));
         return list.get(list.size() - 1);
     }
@@ -315,5 +312,13 @@ public class JsonProcess {
             return path.substring(0, index);
         }
         return null;
+    }
+
+    private static boolean isEmpty(Collection list) {
+        return list == null || list.size() == 0;
+    }
+
+    private static boolean isEmpty(String value) {
+        return value == null || "".equals(value);
     }
 }

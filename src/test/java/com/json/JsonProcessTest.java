@@ -53,99 +53,99 @@ public class JsonProcessTest {
 
     @Test
     public void setValueIntoExistentNode() {
-        Object value = "alameda";
-        String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
-        String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"alameda\"}}}}";
+        Object value = "avenue";
+        String jsonTarget = "{\"order\":{\"number\":123,\"person\":{\"address\":{\"type\":\"street\"}}}}";
+        String jsonResult = "{\"order\":{\"number\":123,\"person\":{\"address\":{\"type\":\"avenue\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.pessoa.endereco.tipo", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.person.address.type", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoNonExistentNode() {
-        Object value = "23 DE MAIO";
-        String jsonTarget = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\"}}}}";
-        String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"tipo\":\"rua\",\"logradouro\":\"23 DE MAIO\"}}}}";
+        Object value = "Michigan Avenue";
+        String jsonTarget = "{\"order\":{\"number\":123,\"person\":{\"address\":{\"type\":\"street\"}}}}";
+        String jsonResult = "{\"order\":{\"number\":123,\"person\":{\"address\":{\"type\":\"street\",\"name\":\"Michigan Avenue\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.pessoa.endereco.logradouro", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.person.address.name", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoNonExistentNodeSeveralNodes() {
-        Object value = "23 DE MAIO";
-        String jsonTarget = "{\"pedido\": {\"numero\": 123,\"pessoa\": {}}}";
-        String jsonResult = "{\"pedido\":{\"numero\":123,\"pessoa\":{\"endereco\":{\"logradouro\":\"23 DE MAIO\"}}}}";
+        Object value = "Michigan Avenue";
+        String jsonTarget = "{\"order\": {\"number\": 123,\"person\": {}}}";
+        String jsonResult = "{\"order\":{\"number\":123,\"person\":{\"address\":{\"name\":\"Michigan Avenue\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.pessoa.endereco.logradouro", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.person.address.name", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoExistentArray() {
-        Object value = "9988776655";
-        String jsonTarget = "{\"contatos\":[{\"nome\":\"GOKU\",\"telefone\":\"1122334455\"}]}";
-        String jsonResult = "{\"contatos\":[{\"nome\":\"GOKU\",\"telefone\":\"9988776655\"}]}";
+        Object value = "754-3010";
+        String jsonTarget = "{\"contacts\":[{\"name\":\"Luther King\",\"phone-number\":\"754-4020\"}]}";
+        String jsonResult = "{\"contacts\":[{\"name\":\"Luther King\",\"phone-number\":\"754-3010\"}]}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contatos[0].telefone", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contacts[0].phone-number", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void addValueIntoExistentArray() {
-        Object value = "GOKU";
-        String jsonTarget = "{\"contatos\":[{\"telefone\":\"1122334455\"}]}";
-        String jsonResult = "{\"contatos\":[{\"telefone\":\"1122334455\",\"nome\":\"GOKU\"}]}";
+        Object value = "Luther King";
+        String jsonTarget = "{\"contacts\":[{\"phone-number\":\"754-4020\"}]}";
+        String jsonResult = "{\"contacts\":[{\"phone-number\":\"754-4020\",\"name\":\"Luther King\"}]}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contatos[0].nome", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contacts[0].name", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoNonExistentArray() {
-        Object value = "9988776655";
+        Object value = "754-3010";
         String jsonTarget = "{}";
-        String jsonResult = "{\"contatos\":[{\"telefone\":\"9988776655\"}]}";
+        String jsonResult = "{\"contacts\":[{\"phone-number\":\"754-3010\"}]}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contatos[0].telefone", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.contacts[0].phone-number", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoNonExistentArrayMoreComplex() {
-        Object value = "JOSE";
-        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\"}}}}";
-        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
+        Object value = "JOSEPH";
+        String jsonTarget = "{\"order\":{\"order-item\":[{\"product\":{\"id\":\"112233\"}}],\"customers\":{\"customer\":{\"person-type\":\"LP\"}}}}";
+        String jsonResult = "{\"order\":{\"order-item\":[{\"product\":{\"id\":\"112233\"}}],\"customers\":{\"customer\":{\"person-type\":\"LP\",\"contact\":[{\"name\":\"JOSEPH\"}]}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.clientes.cliente.contato[0].nome-contato", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.customers.customer.contact[0].name", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoExistentArrayMoreComplex() {
-        Object value = "MARIA";
-        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"}]}}}}";
-        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"clientes\":{\"cliente\":{\"tipo-pessoa\":\"PF\",\"contato\":[{\"nome-contato\":\"JOSE\"},{\"nome-contato\":\"MARIA\"}]}}}}";
+        Object value = "MARY";
+        String jsonTarget = "{\"order\":{\"order-item\":[{\"product\":{\"id\":\"112233\"}}],\"customers\":{\"customer\":{\"person-type\":\"LP\",\"contact\":[{\"name\":\"JOSEPH\"}]}}}}";
+        String jsonResult = "{\"order\":{\"order-item\":[{\"product\":{\"id\":\"112233\"}}],\"customers\":{\"customer\":{\"person-type\":\"LP\",\"contact\":[{\"name\":\"JOSEPH\"},{\"name\":\"MARY\"}]}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.clientes.cliente.contato[1].nome-contato", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.customers.customer.contact[1].name", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
 
     @Test
     public void setValueIntoExistentArrayEvenMoreComplex() {
-        Object value = "livro";
-        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\"}}],\"cliente\":{\"endereco\":{\"logradouro\":\"AVENIDA\"}}}}";
-        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"id\":\"112233\",\"grupo\":{\"tipo\":\"livro\"}}}],\"cliente\":{\"endereco\":{\"logradouro\":\"AVENIDA\"}}}}";
+        Object value = "book";
+        String jsonTarget = "{\"order\":{\"order-item\":[{\"product\":{\"id\":\"112233\"}}],\"customer\":{\"address\":{\"name\":\"Michigan Avenue\"}}}}";
+        String jsonResult = "{\"order\":{\"order-item\":[{\"product\":{\"id\":\"112233\",\"group\":{\"type\":\"book\"}}}],\"customer\":{\"address\":{\"name\":\"Michigan Avenue\"}}}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.item-pedido[0].produto.grupo.tipo", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.order-item[0].product.group.type", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
@@ -153,10 +153,10 @@ public class JsonProcessTest {
     @Test
     public void setValueIntoExistentArrayIntoAnotherArray() {
         Object value = "5678";
-        String jsonTarget = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"item-produto\":null}}]}}";
-        String jsonResult = "{\"pedido\":{\"item-pedido\":[{\"produto\":{\"item-produto\":[{\"id\":\"5678\"}]}}]}}";
+        String jsonTarget = "{\"order\":{\"order-item\":[{\"product\":{\"product-item\":null}}]}}";
+        String jsonResult = "{\"order\":{\"order-item\":[{\"product\":{\"product-item\":[{\"id\":\"5678\"}]}}]}}";
 
-        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.pedido.item-pedido[0].produto.item-produto[0].id", value);
+        String result = jsonProcess.setValueIntoJsonPath(jsonTarget, "$.order.order-item[0].product.product-item[0].id", value);
 
         assertThat(result, is(equalTo(jsonResult)));
     }
